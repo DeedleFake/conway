@@ -1,0 +1,46 @@
+<!DOCTYPE html5>
+<html>
+	<head>
+		<title>Conway's Game of Life</title>
+
+		<script type='application/javascript' src='go.js'></script>
+		<script type='application/javascript'>
+			(async () => {
+				let buf = await fetch('./conway.wasm').then((rsp) => rsp.arrayBuffer())
+
+				let go = new Go()
+				let wasm = await WebAssembly.instantiate(buf, go.importObject)
+				go.run(wasm.instance)
+
+				initConway(document.getElementById('display'))
+			})()
+		</script>
+
+		<style type='text/css'>
+			body
+			{
+				display:flex;
+				flex-direction:column;
+				align-items:center;
+
+				color:#FFFFFF;
+				background-color:#000000;
+			}
+
+			#controls
+			{
+				display:flex;
+				flex-direction:row;
+				justify-content:space-around;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id='display' width='640' height='480'></canvas>
+
+		<div id='controls'>
+			<button onclick='startConway()'>Start</button>
+			<!--<button onclick='stopConway()'>Stop</button>-->
+		</div>
+	</body>
+</html>
