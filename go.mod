@@ -1,1 +1,1 @@
-module tests/conway
+module github.com/DeedleFake/conway
