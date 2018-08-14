@@ -33,59 +33,61 @@ func main() {
 		stopper func()
 	)
 
-	js.Global().Set("initConway", js.NewCallback(func(args []js.Value) {
-		display = NewDisplay(args[0])
-		drawWorld(display, world)
+	js.Global().Set("Conway", map[string]interface{}{
+		"init": js.NewCallback(func(args []js.Value) {
+			display = NewDisplay(args[0])
+			drawWorld(display, world)
 
-		args[0].Call("addEventListener", "click", js.NewEventCallback(js.PreventDefault, func(ev js.Value) {
+			args[0].Call("addEventListener", "click", js.NewEventCallback(js.PreventDefault, func(ev js.Value) {
+				if stopper != nil {
+					return
+				}
+
+				bounds := ev.Get("target").Call("getBoundingClientRect")
+				x, y := ev.Get("clientX").Int()-bounds.Get("x").Int(), ev.Get("clientY").Int()-bounds.Get("y").Int()
+
+				cell := Cell{x / 10, y / 10}
+				switch _, ok := world[cell]; ok {
+				case true:
+					delete(world, cell)
+				case false:
+					world[cell] = struct{}{}
+				}
+
+				drawWorld(display, world)
+			}))
+		}),
+
+		"start": js.NewCallback(func(args []js.Value) {
 			if stopper != nil {
 				return
 			}
 
-			bounds := ev.Get("target").Call("getBoundingClientRect")
-			x, y := ev.Get("clientX").Int()-bounds.Get("x").Int(), ev.Get("clientY").Int()-bounds.Get("y").Int()
+			ctx, cancel := context.WithCancel(context.Background())
+			stopper = cancel
 
-			cell := Cell{x / 10, y / 10}
-			switch _, ok := world[cell]; ok {
-			case true:
-				delete(world, cell)
-			case false:
-				world[cell] = struct{}{}
+			fps := time.NewTicker(time.Second / 5)
+			defer fps.Stop()
+
+			for {
+				drawWorld(display, world)
+				world = world.Next()
+
+				select {
+				case <-ctx.Done():
+					return
+				case <-fps.C:
+				}
 			}
+		}),
 
-			drawWorld(display, world)
-		}))
-	}))
-
-	js.Global().Set("startConway", js.NewCallback(func(args []js.Value) {
-		if stopper != nil {
-			return
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		stopper = cancel
-
-		fps := time.NewTicker(time.Second / 5)
-		defer fps.Stop()
-
-		for {
-			drawWorld(display, world)
-			world = world.Next()
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-fps.C:
+		"stop": js.NewCallback(func(args []js.Value) {
+			if stopper != nil {
+				stopper()
+				stopper = nil
 			}
-		}
-	}))
-
-	js.Global().Set("stopConway", js.NewCallback(func(args []js.Value) {
-		if stopper != nil {
-			stopper()
-			stopper = nil
-		}
-	}))
+		}),
+	})
 
 	select {}
 }

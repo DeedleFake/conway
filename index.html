@@ -12,7 +12,7 @@
 				let wasm = await WebAssembly.instantiate(buf, go.importObject)
 				go.run(wasm.instance)
 
-				initConway(document.getElementById('display'))
+				Conway.init(document.getElementById('display'))
 			})()
 		</script>
 
@@ -39,8 +39,8 @@
 		<canvas id='display' width='640' height='480'></canvas>
 
 		<div id='controls'>
-			<button onclick='startConway()'>Start</button>
-			<!--<button onclick='stopConway()'>Stop</button>-->
+			<button onclick='Conway.start()'>Start</button>
+			<!--<button onclick='Conway.stop()'>Stop</button>-->
 		</div>
 	</body>
 </html>
