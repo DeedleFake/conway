@@ -23,6 +23,10 @@ func main() {
 			Cell{6, 6}: struct{}{},
 			Cell{6, 5}: struct{}{},
 			Cell{6, 4}: struct{}{},
+
+			Cell{14, 15}: struct{}{},
+			Cell{15, 15}: struct{}{},
+			Cell{16, 15}: struct{}{},
 		}
 		display *Display
 
