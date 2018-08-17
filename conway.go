@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"image"
+	"image/color"
 	"syscall/js"
 	"time"
 )
@@ -11,7 +12,7 @@ func drawWorld(d *Display, w World) {
 	d.FillRect(image.White, image.Rect(0, 0, 640, 480))
 
 	for c := range w {
-		d.FillRect(image.Black, image.Rect(c.X*10, c.Y*10, (c.X*10)+10, (c.Y*10)+10))
+		d.FillRect(color.Black, image.Rect(c.X*10, c.Y*10, (c.X*10)+10, (c.Y*10)+10))
 	}
 }
 

@@ -30,6 +30,6 @@ func htmlColor(c color.Color) string {
 		r*255/0xFFFF,
 		g*255/0xFFFF,
 		b*255/0xFFFF,
-		a*255/0xFFFF,
+		float64(a)/0xFFFF,
 	)
 }
