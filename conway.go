@@ -39,24 +39,22 @@ func main() {
 			drawWorld(display, world)
 
 			args[0].Call("addEventListener", "click", js.NewEventCallback(js.PreventDefault, func(ev js.Value) {
-				go func() {
-					if len(stopper) != 0 {
-						return
-					}
+				if len(stopper) != 0 {
+					return
+				}
 
-					bounds := ev.Get("target").Call("getBoundingClientRect")
-					x, y := ev.Get("clientX").Int()-bounds.Get("x").Int(), ev.Get("clientY").Int()-bounds.Get("y").Int()
+				bounds := ev.Get("target").Call("getBoundingClientRect")
+				x, y := ev.Get("clientX").Int()-bounds.Get("x").Int(), ev.Get("clientY").Int()-bounds.Get("y").Int()
 
-					cell := Cell{x / 10, y / 10}
-					switch _, ok := world[cell]; ok {
-					case true:
-						delete(world, cell)
-					case false:
-						world[cell] = struct{}{}
-					}
+				cell := Cell{x / 10, y / 10}
+				switch _, ok := world[cell]; ok {
+				case true:
+					delete(world, cell)
+				case false:
+					world[cell] = struct{}{}
+				}
 
-					drawWorld(display, world)
-				}()
+				drawWorld(display, world)
 			}))
 		}),
 
