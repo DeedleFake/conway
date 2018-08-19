@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"image"
 	"image/color"
 	"syscall/js"
@@ -31,7 +30,7 @@ func main() {
 		}
 		display *Display
 
-		stopper func()
+		stopper = make(chan chan struct{}, 1)
 	)
 
 	js.Global().Set("Conway", map[string]interface{}{
@@ -40,53 +39,60 @@ func main() {
 			drawWorld(display, world)
 
 			args[0].Call("addEventListener", "click", js.NewEventCallback(js.PreventDefault, func(ev js.Value) {
-				if stopper != nil {
-					return
-				}
+				go func() {
+					if len(stopper) != 0 {
+						return
+					}
 
-				bounds := ev.Get("target").Call("getBoundingClientRect")
-				x, y := ev.Get("clientX").Int()-bounds.Get("x").Int(), ev.Get("clientY").Int()-bounds.Get("y").Int()
+					bounds := ev.Get("target").Call("getBoundingClientRect")
+					x, y := ev.Get("clientX").Int()-bounds.Get("x").Int(), ev.Get("clientY").Int()-bounds.Get("y").Int()
 
-				cell := Cell{x / 10, y / 10}
-				switch _, ok := world[cell]; ok {
-				case true:
-					delete(world, cell)
-				case false:
-					world[cell] = struct{}{}
-				}
+					cell := Cell{x / 10, y / 10}
+					switch _, ok := world[cell]; ok {
+					case true:
+						delete(world, cell)
+					case false:
+						world[cell] = struct{}{}
+					}
 
-				drawWorld(display, world)
+					drawWorld(display, world)
+				}()
 			}))
 		}),
 
 		"start": js.NewCallback(func(args []js.Value) {
-			if stopper != nil {
-				return
-			}
-
-			ctx, cancel := context.WithCancel(context.Background())
-			stopper = cancel
-
-			fps := time.NewTicker(time.Second / 5)
-			defer fps.Stop()
-
-			for {
-				drawWorld(display, world)
-				world = world.Next()
-
+			go func() {
+				done := make(chan struct{})
 				select {
-				case <-ctx.Done():
+				case stopper <- done:
+				default:
 					return
-				case <-fps.C:
 				}
-			}
+
+				fps := time.NewTicker(time.Second / 5)
+				defer fps.Stop()
+
+				for {
+					world = world.Next()
+					drawWorld(display, world)
+
+					select {
+					case <-done:
+						return
+					case <-fps.C:
+					}
+				}
+			}()
 		}),
 
 		"stop": js.NewCallback(func(args []js.Value) {
-			if stopper != nil {
-				stopper()
-				stopper = nil
-			}
+			go func() {
+				select {
+				case done := <-stopper:
+					close(done)
+				default:
+				}
+			}()
 		}),
 	})
 
