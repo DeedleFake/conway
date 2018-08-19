@@ -86,13 +86,11 @@ func main() {
 		}),
 
 		"stop": js.NewCallback(func(args []js.Value) {
-			go func() {
-				select {
-				case done := <-stopper:
-					close(done)
-				default:
-				}
-			}()
+			select {
+			case done := <-stopper:
+				close(done)
+			default:
+			}
 		}),
 	})
 
